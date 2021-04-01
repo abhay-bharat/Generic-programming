@@ -32,9 +32,15 @@ int main()
 	// cout << "\n";
 
 	// cout << "Inorder\n";
-	disp(bst.begin(), bst.end());
+	// disp(bst.begin(), bst.end());
 	// cout << "\n";
 
+	cout << "Preorder traversal\n";
+	bst.preorder();
+	cout << "Inorder traversal\n";
+	bst.inorder();
+	cout << "Postorder traversal\n";
+	bst.postorder();
 	// cout << "Reverse Order\n";
 	// auto it = bst.max_element();
 	// while(it != bst.begin())

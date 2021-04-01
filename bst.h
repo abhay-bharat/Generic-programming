@@ -25,7 +25,6 @@ struct TreeNode
 	TreeNode *left;
 	TreeNode *right;
 	TreeNode *parent;
-	TreeNode() : data(T()), left(nullptr), right(nullptr), parent(nullptr) { } //default constructor for the dummy node, stores the default value of the type T
 	TreeNode(T data) : data(data), left(nullptr), right(nullptr), parent(nullptr) { }
 };
 
@@ -34,8 +33,8 @@ class BST
 {
 	private:
 	TreeNode<T> *root;
+	TreeNode<T> *dummy;
 	Compare cmp; // will have operator() overloaded for comparision
-	TreeNode<T> *dummy_end; //end iterator point to this that one location after the end of bst
 	int cnt;
 	void release(TreeNode<T> *root);
 	void printUtil(TreeNode<T> *root, int space);
@@ -44,8 +43,10 @@ class BST
 	static TreeNode<T> *inorder_successor(TreeNode<T> *node);
 	static TreeNode<T> *inorder_predecessor(TreeNode<T> *node);
 	public:
-	BST() : root(nullptr), cmp(Compare()), cnt(0), dummy_end(new TreeNode<T>()){ } 
+	BST() : root(new TreeNode<T>(T())), dummy(nullptr), cmp(Compare()), cnt(0) { dummy = root; }
 	~BST() { release(root); }
+	BST(const BST&) = delete;
+	BST& operator=(const BST&) = delete;
 	class Iterator
 	{
 		private:
@@ -74,20 +75,23 @@ class BST
 			--*this;
 			return temp;
 		}
-		T& operator*()
+		const T& operator*()
 		{
 			return p_it_->data;
 		}
 		bool operator==(const Iterator& rhs) const
 		{
-			if(p_it_ == nullptr && rhs.p_it_ == nullptr)
-				return true;
 			return p_it_ == rhs.p_it_;
 		}
 		bool operator!=(const Iterator& rhs) const
 		{
 			return !(*this == rhs);
 		}
+		typedef ptrdiff_t difference_type; // almost always ptrdiff_t
+		typedef T value_type; // almost always T
+		typedef const TreeNode<T>& reference; // almost always T& or const T&
+		typedef const TreeNode<T>* pointer; // almost always T* or const T*
+		typedef bidirectional_iterator_tag iterator_category;  // usually std::forward_iterator_tag or similar
 	};
 	void insert(T x);
 	Iterator search(T x);
@@ -100,16 +104,9 @@ class BST
 	int height();
 	void print();
 	Iterator min_element() { return Iterator(min(root)); }
-	Iterator max_element() { return Iterator(max(root)); }
+	Iterator max_element() { return cnt == 0 ? Iterator(dummy) : Iterator(max(root)->parent); }
 	Iterator begin() { return Iterator(min(root)); }
-	// Iterator end() { return Iterator(nullptr); }
-	Iterator end() { TreeNode<T>* max_node = max(root);
-					 // cout << "1\n";
-					 if(max_node->right == NULL)
-					 	max_node->right = dummy_end;
-					 // cout << "2\n";
-					 return Iterator(dummy_end);
-					}
+	Iterator end() { return Iterator(dummy); }
 };
 
 
@@ -167,21 +164,25 @@ TreeNode<T> *BST<T, Compare>::inorder_predecessor(TreeNode<T> *node)
 template<typename T, typename Compare>
 void BST<T, Compare>::insert(T x)
 {
-	if(root == nullptr)
+	if(root == dummy)
 	{
-		root = new TreeNode<T>(x);
+		TreeNode<T> *temp = new TreeNode<T>(x);
+		temp->right = dummy;
+		dummy->parent = temp;
+		root = temp;
 		++cnt;
 	}
 	else
 	{
 		TreeNode<T> *prev = nullptr;
 		TreeNode<T> *curr = root;
-		while(curr)
+		while(curr && curr != dummy)
 		{
 			prev = curr;
 			bool lesser = cmp(x, curr->data);
 			if(!lesser && !cmp(curr->data, x))
 			{
+				// duplicates not allowed
 				return;
 			}
 			if(lesser)
@@ -202,9 +203,39 @@ void BST<T, Compare>::insert(T x)
 		else
 		{
 			prev->right = temp;
+			if(curr == dummy)
+			{
+				temp->right = dummy;
+				dummy->parent = temp;
+			}
 		}
 		temp->parent = prev;
 	}
+}
+
+template<typename T, typename Compare>
+typename BST<T, Compare>::Iterator BST<T, Compare>::search(T x)
+{
+	if(cnt == 0)
+		return end();
+	TreeNode<T> *curr = root;
+	bool lesser = cmp(x, curr->data);
+	while( curr && curr != dummy && ! ( !lesser && !cmp(curr->data, x) ) )
+	{
+		if(lesser)
+		{
+			curr = curr->left;
+		}
+		else
+		{
+			curr = curr->right;
+		}
+		if(curr && curr != dummy)
+			lesser = cmp(x, curr->data);
+	}
+	if(curr == nullptr || curr == dummy)
+		return end();
+	return Iterator(curr);
 }
 
 template<typename T, typename Compare>
@@ -223,7 +254,7 @@ template<typename T, typename Compare>
 void BST<T, Compare>::printUtil(TreeNode<T> *root, int space) 
 { 
     // Base case 
-    if (root == nullptr) 
+    if (root == nullptr || root == dummy) 
         return; 
   
     // Increase distance between levels 
@@ -252,11 +283,47 @@ void BST<T, Compare>::print()
     printf("\n");
 }
 
-// template<typename T, typename Compare>
-// BST<T, Compare>::Iterator BST<T, Compare>::end(){
-// 	// BST<T, Compare>::Iterator it_max = max_element(); //But iterators abstract away the container, hence cannot access the right pointer of the max node :(
-// 	// it_max->
-// 	TreeNode<T>* max_node = max(root);
-// 	max_node->right = dummy_end;
-// 	return Iterator(dummy_end);
-// }
+template<typename T>
+void preorder_(TreeNode<T>* root, TreeNode<T>* dummy){
+	if(root == nullptr || root == dummy)
+		return;
+	cout << root->data << "\t";
+	preorder_(root->left, dummy);
+	preorder_(root->right, dummy);
+}
+
+template<typename T, typename Compare>
+void BST<T, Compare>::preorder(){
+	preorder_(root, dummy);
+	cout << "\n";
+}
+
+template<typename T>
+void inorder_(TreeNode<T>* root, TreeNode<T>* dummy){
+	if(root == nullptr || root == dummy)
+		return;
+	inorder_(root->left, dummy);
+	cout << root->data << "\t";
+	inorder_(root->right, dummy);
+}
+
+template<typename T, typename Compare>
+void BST<T, Compare>::inorder(){
+	inorder_(root, dummy);
+	cout << "\n";
+}
+
+template<typename T>
+void postorder_(TreeNode<T>* root, TreeNode<T>* dummy){
+	if(root == nullptr || root == dummy)
+		return;
+	postorder_(root->left, dummy);
+	postorder_(root->right, dummy);
+	cout << root->data << "\t";
+}
+
+template<typename T, typename Compare>
+void BST<T, Compare>::postorder(){
+	postorder_(root, dummy);
+	cout << "\n";
+}
