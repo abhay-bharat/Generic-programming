@@ -41,6 +41,10 @@ int main()
 	bst.inorder();
 	cout << "Postorder traversal\n";
 	bst.postorder();
+
+	cout << "\n\n";
+	if(typeid(BST<string>::Iterator::iterator_category) == typeid(bidirectional_iterator_tag))
+		cout << "traits work" <<"\n";
 	// cout << "Reverse Order\n";
 	// auto it = bst.max_element();
 	// while(it != bst.begin())
