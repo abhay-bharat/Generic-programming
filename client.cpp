@@ -45,6 +45,14 @@ int main()
 	cout << "\n\n";
 	if(typeid(BST<string>::Iterator::iterator_category) == typeid(bidirectional_iterator_tag))
 		cout << "traits work" <<"\n";
+
+	BST<string>::Iterator it = bst.search("zebra");
+	if(it == end(bst)){
+		cout << "Not found\n";
+	}
+	else{
+		cout << "Found " << *it << "\n";
+	}
 	// cout << "Reverse Order\n";
 	// auto it = bst.max_element();
 	// while(it != bst.begin())
