@@ -1,5 +1,7 @@
 #include <algorithm>
+#include <vector>
 #include "bst.h"
+using namespace std;
 
 #if 0
 struct MyStringCompare
@@ -9,10 +11,24 @@ struct MyStringCompare
 };
 #endif
 
+#if 0
 int main()
 {
 
-#if 1
+	BST<int> bst;
+	bst.insert(10);
+	bst.insert(5);
+	bst.insert(20);
+	bst.insert(15);
+	bst.insert(25);
+	bst.insert(1);
+	bst.insert(7);
+	bst.insert(4);
+	// bst.print();
+
+	bst.remove(100);
+	bst.print();
+#if 0
 	BST<string> bst;
 	// BST<string, MyStringCompare> bst;
 	bst.insert("rama");
@@ -59,7 +75,7 @@ int main()
 	// {
 	// 	cout << *it << "\t";
 	// 	--it;
-	// }
+	// }		
 	// cout << *it;
 	// cout << "\n\n";
 
@@ -104,4 +120,13 @@ int main()
 
 	return 0;
 #endif
+}
+
+#endif
+
+int main(){
+	vector<int> a{10, 1, 3,20, 15};
+	BST<int> bst(begin(a), end(a));
+
+	bst.print();
 }
